@@ -1,67 +1,148 @@
-# PySlowFast
+# AdaEmbed: Semi-supervised Domain Adaptation in the Embedding Space
 
-PySlowFast is an open source video understanding codebase from FAIR that provides state-of-the-art video classification models with efficient training. This repository includes implementations of the following methods:
+**AdaEmbed** is a domain adaptation framework for both **unsupervised (UDA)** and **semi-supervised (SSDA)** settings on image classification tasks. It learns a shared embedding space between source and target domains, uses prototype-based pseudo-labeling to generate accurate and balanced labels for unlabeled target samples, and applies contrastive learning to align instance features across domains.
 
-- [SlowFast Networks for Video Recognition](https://arxiv.org/abs/1812.03982)
-- [Non-local Neural Networks](https://arxiv.org/abs/1711.07971)
-- [A Multigrid Method for Efficiently Training Video Models](https://arxiv.org/abs/1912.00998)
-- [X3D: Progressive Network Expansion for Efficient Video Recognition](https://arxiv.org/abs/2004.04730)
-- [Multiscale Vision Transformers](https://arxiv.org/abs/2104.11227.pdf)
+---
 
-<div align="center">
-  <img src="demo/ava_demo.gif" width="600px"/>
-</div>
+## Method
 
-## Introduction
+AdaEmbed consists of three training objectives:
 
-The goal of PySlowFast is to provide a high-performance, light-weight pytorch codebase provides state-of-the-art video backbones for video understanding research on different tasks (classification, detection, and etc). It is designed in order to support rapid implementation and evaluation of novel video research ideas. PySlowFast includes implementations of the following backbone network architectures:
+1. **Supervised loss** (`Ls`) — cross-entropy on labeled source and target samples.
+2. **Pseudo-label loss** (`Lt`) — cross-entropy on unlabeled target samples whose momentum features fall within the *k*-nearest neighbors of class prototypes. Sampling is balanced per prototype to produce a near-uniform pseudo-label distribution.
+3. **Contrastive loss** (`Lc`) — InfoNCE loss that pushes apart target features with different pseudo-labels in the embedding space using a momentum memory bank.
 
-- SlowFast
-- Slow
-- C2D
-- I3D
-- Non-local Network
-- X3D
+A **gradient reversal layer** implements minimax entropy training: the classifier maximizes entropy over unlabeled target predictions (updating prototypes toward domain-invariant positions) while the encoder minimizes it.
 
-## Updates
- - We now support [Multiscale Vision Transformers](https://arxiv.org/abs/2104.11227.pdf) on Kinetics and ImageNet. See [`projects/mvit`](./projects/mvit/README.md) for more information.
- - We now support [PyTorchVideo](https://github.com/facebookresearch/pytorchvideo) models and datasets. See [`projects/pytorchvideo`](./projects/pytorchvideo/README.md) for more information.
- - We now support [X3D Models](https://arxiv.org/abs/2004.04730). See [`projects/x3d`](./projects/x3d/README.md) for more information.
- - We now support [Multigrid Training](https://arxiv.org/abs/1912.00998) for efficiently training video models. See [`projects/multigrid`](./projects/multigrid/README.md) for more information.
- - PySlowFast is released in conjunction with our [ICCV 2019 Tutorial](https://alexander-kirillov.github.io/tutorials/visual-recognition-iccv19/).
+**Backbone:** Swin Transformer V2 (tiny). Any standard classification backbone can be substituted — AdaEmbed is model-agnostic.
 
-## License
+---
 
-PySlowFast is released under the [Apache 2.0 license](LICENSE).
+## Datasets
 
-## Model Zoo and Baselines
+| Dataset | Domains | Classes |
+|---|---|---|
+| **DomainNet-126** | Real, Sketch, Clipart, Painting | 126 |
+| **Office-Home** | Real, Clipart, Art, Product | 65 |
+| **VisDA-C** | Synthetic → Real | 12 |
 
-We provide a large set of baseline results and trained models available for download in the PySlowFast [Model Zoo](MODEL_ZOO.md).
+Download DomainNet and VisDA-C:
+```bash
+bash download_data.sh
+```
+
+---
 
 ## Installation
 
-Please find installation instructions for PyTorch and PySlowFast in [INSTALL.md](INSTALL.md). You may follow the instructions in [DATASET.md](slowfast/datasets/DATASET.md) to prepare the datasets.
+```bash
+pip install -e .
+```
 
-## Quick Start
+**Key dependencies:** PyTorch, torchvision ≥ 0.4.2, pytorchvideo, scikit-learn, einops, tensorboard, yacs, opencv-python.
 
-Follow the example in [GETTING_STARTED.md](GETTING_STARTED.md) to start playing video models with PySlowFast.
+---
 
-## Visualization Tools
+## Running Experiments
 
-We offer a range of visualization tools for the train/eval/test processes, model analysis, and for running inference with trained model.
-More information at [Visualization Tools](VISUALIZATION_TOOLS.md).
+All experiments are launched through `tools/run_net.py`. The `ADAPTATION.ADAPTATION_TYPE` field in the config selects the method.
 
-## Contributors
-PySlowFast is written and maintained by [Haoqi Fan](https://haoqifan.github.io/), [Yanghao Li](https://lyttonhao.github.io/), [Bo Xiong](https://www.cs.utexas.edu/~bxiong/), [Wan-Yen Lo](https://www.linkedin.com/in/wanyenlo/), [Christoph Feichtenhofer](https://feichtenhofer.github.io/).
+```bash
+python tools/run_net.py --cfg configs/domainnet/R2P_AdaEmbed_SwinV2T.yaml
+```
 
-## Citing PySlowFast
-If you find PySlowFast useful in your research, please use the following BibTeX entry for citation.
-```BibTeX
-@misc{fan2020pyslowfast,
-  author =       {Haoqi Fan and Yanghao Li and Bo Xiong and Wan-Yen Lo and
-                  Christoph Feichtenhofer},
-  title =        {PySlowFast},
-  howpublished = {\url{https://github.com/facebookresearch/slowfast}},
-  year =         {2020}
+Before running, update the following fields in the config to match your environment:
+
+- `TRAIN.CHECKPOINT_FILE_PATH` — path to pretrained Swin Transformer V2 weights (ImageNet-1K)
+- `DATA.PATH_TO_DATA_DIR` / `DATA.PATH_PREFIX` / `DATA.PATH_TO_PRELOAD_IMDB` — dataset root
+- `OUTPUT_DIR` — logging and checkpoint output directory
+
+**SSDA mode** (e.g., 3-shot): set `ADAPTATION.SEMI_SUPERVISED.ENABLE: True` and `ADAPTATION.SEMI_SUPERVISED.NUM_SHOTS: 3` in the config.
+
+### Key Hyperparameters
+
+| Parameter | Value |
+|---|---|
+| Base LR | 0.05 (cosine, SGD) |
+| Max epochs | 50 |
+| Memory bank size (`M`) | 1000 |
+| EMA momentum (`m`) | 0.95 |
+| Neighbors (`k`) | 10 |
+| Temperature (`τ`) | 0.05 |
+| `λ_t` | 2.0 |
+| `λ_c` | 0.1 |
+| `λ_H` | 0.1 |
+
+---
+
+## Implemented Baselines
+
+The following methods are available under the same framework and config structure:
+
+- **Supervised only** — labeled data only
+- **MME** (Minimax Entropy) — `ADAPTATION_TYPE: MME`
+- **CLDA** — contrastive learning for SSDA
+- **ECACL** — categorical alignment with strong augmentation
+- **AdaMatch** — `ADAPTATION_TYPE: AdaMatch`
+- **AdaContrast** — test-time adaptation via nearest-neighbor pseudo-label refinement
+- **AdaEmbed** — `ADAPTATION_TYPE: AdaEmbed` *(ours)*
+
+Configs for each baseline are provided under `configs/domainnet/`, `configs/office_home/`, and `configs/visda/`.
+
+---
+
+## Results
+
+AdaEmbed sets a new state of the art on all three benchmarks.
+
+**DomainNet-126 Average Accuracy:**
+
+| Setting | MME | AdaMatch | AdaContrast | **AdaEmbed** |
+|---|---|---|---|---|
+| UDA | 63.46 | 75.42 | 72.90 | **75.98** |
+| 1-shot | 69.25 | 76.62 | 76.65 | **77.34** |
+| 3-shot | 72.46 | 78.94 | 78.72 | **78.97** |
+
+**VisDA-C Average Accuracy:**
+
+| Setting | AdaContrast | **AdaEmbed** |
+|---|---|---|
+| UDA | 83.42 | **87.08** |
+| 1-shot | 77.25 | **86.83** |
+| 3-shot | 85.00 | **87.25** |
+
+---
+
+## Repository Structure
+
+```
+configs/          # Experiment configs per dataset and method
+tools/
+  run_net.py      # Main entry point
+  train_adaembed.py
+  train_adamatch.py
+  train_mme.py
+  train_mcd.py
+  test_net.py
+slowfast/
+  models/         # Backbones (Swin V2, ViT, ResNet, I3D, ...)
+  datasets/       # Data loaders
+  utils/          # Logging, metrics, checkpointing
+  config/         # Default config and schema
+```
+
+---
+
+## Citation
+
+```bibtex
+@article{mottaghi2024adaembed,
+  title={AdaEmbed: Semi-supervised Domain Adaptation in the Embedding Space},
+  author={Mottaghi, Ali and Jamal, Mohammad Abdullah and Yeung, Serena and Mohareri, Omid},
+  year={2024}
 }
 ```
+
+---
+
+*This codebase is built on top of [facebookresearch/SlowFast](https://github.com/facebookresearch/SlowFast).*

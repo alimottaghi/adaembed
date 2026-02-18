@@ -4,11 +4,11 @@
 from setuptools import find_packages, setup
 
 setup(
-    name="slowfast",
+    name="adaembed",
     version="1.0",
-    author="FAIR",
+    author="Ali Mottaghi",
     url="unknown",
-    description="SlowFast Video Understanding",
+    description="AdaEmbed: Semi-supervised Domain Adaptation in the Embedding Space",
     install_requires=[
         "yacs>=0.1.6",
         "pyyaml>=5.1",
