@@ -1,6 +1,8 @@
 # AdaEmbed: Semi-supervised Domain Adaptation in the Embedding Space
 
-**AdaEmbed** is a domain adaptation framework for both **unsupervised (UDA)** and **semi-supervised (SSDA)** settings on image classification tasks. It learns a shared embedding space between source and target domains, uses prototype-based pseudo-labeling to generate accurate and balanced labels for unlabeled target samples, and applies contrastive learning to align instance features across domains.
+[**AdaEmbed**](https://arxiv.org/abs/2401.12421) is a domain adaptation framework for both **unsupervised (UDA)** and **semi-supervised (SSDA)** settings on image classification tasks. It learns a shared embedding space between source and target domains, uses prototype-based pseudo-labeling to generate accurate and balanced labels for unlabeled target samples, and applies contrastive learning to align instance features across domains.
+
+![AdaEmbed method overview](adaembed.png)
 
 ---
 
@@ -68,7 +70,8 @@ Before running, update the following fields in the config to match your environm
 | Memory bank size (`M`) | 1000 |
 | EMA momentum (`m`) | 0.95 |
 | Neighbors (`k`) | 10 |
-| Temperature (`τ`) | 0.05 |
+| Contrastive temperature | 0.05 |
+| Pseudo-label threshold (`τ`) | 0.9 |
 | `λ_t` | 2.0 |
 | `λ_c` | 0.1 |
 | `λ_H` | 0.1 |
@@ -100,8 +103,8 @@ AdaEmbed sets a new state of the art on all three benchmarks.
 | Setting | MME | AdaMatch | AdaContrast | **AdaEmbed** |
 |---|---|---|---|---|
 | UDA | 63.46 | 75.42 | 72.90 | **75.98** |
-| 1-shot | 69.25 | 76.62 | 76.65 | **77.34** |
-| 3-shot | 72.46 | 78.94 | 78.72 | **78.97** |
+| 1-shot | 69.25 | 76.82 | 76.65 | **77.34** |
+| 3-shot | 72.46 | 78.28 | 78.72 | **78.97** |
 
 **VisDA-C Average Accuracy:**
 
@@ -133,6 +136,12 @@ slowfast/
 
 ---
 
+## License
+
+This codebase is built on [PySlowFast](https://github.com/facebookresearch/slowfast), which is released under the [Apache 2.0 License](https://www.apache.org/licenses/LICENSE-2.0). The Swin Transformer V2 implementation is Copyright (c) 2022 Microsoft and released under the [MIT License](https://opensource.org/licenses/MIT).
+
+---
+
 ## Citation
 
 ```bibtex
@@ -142,7 +151,3 @@ slowfast/
   year={2024}
 }
 ```
-
----
-
-*This codebase is built on top of [facebookresearch/SlowFast](https://github.com/facebookresearch/SlowFast).*
