@@ -7,7 +7,7 @@ setup(
     name="adaembed",
     version="1.0",
     author="Ali Mottaghi",
-    url="unknown",
+    url="https://arxiv.org/abs/2401.12421",
     description="AdaEmbed: Semi-supervised Domain Adaptation in the Embedding Space",
     install_requires=[
         "yacs>=0.1.6",

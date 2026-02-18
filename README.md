@@ -28,7 +28,7 @@ A **gradient reversal layer** implements minimax entropy training: the classifie
 | **Office-Home** | Real, Clipart, Art, Product | 65 |
 | **VisDA-C** | Synthetic → Real | 12 |
 
-Download DomainNet and VisDA-C:
+Download DomainNet and VisDA-C (downloads to `/data` by default):
 ```bash
 bash download_data.sh
 ```
@@ -58,6 +58,8 @@ Before running, update the following fields in the config to match your environm
 - `TRAIN.CHECKPOINT_FILE_PATH` — path to pretrained Swin Transformer V2 weights (ImageNet-1K)
 - `DATA.PATH_TO_DATA_DIR` / `DATA.PATH_PREFIX` / `DATA.PATH_TO_PRELOAD_IMDB` — dataset root
 - `OUTPUT_DIR` — logging and checkpoint output directory
+- `TENSORBOARD.CLASS_NAMES_PATH` — path to the dataset `classnames.json` file
+- `NUM_GPUS` — number of GPUs available (configs default to 8)
 
 **SSDA mode** (e.g., 3-shot): set `ADAPTATION.SEMI_SUPERVISED.ENABLE: True` and `ADAPTATION.SEMI_SUPERVISED.NUM_SHOTS: 3` in the config.
 
@@ -74,6 +76,7 @@ Before running, update the following fields in the config to match your environm
 | Pseudo-label threshold (`τ`) | 0.9 |
 | `λ_t` | 2.0 |
 | `λ_c` | 0.1 |
+| `λ_p` (prototype loss) | 0.1 |
 | `λ_H` | 0.1 |
 
 ---
@@ -119,19 +122,28 @@ AdaEmbed sets a new state of the art on all three benchmarks.
 ## Repository Structure
 
 ```
-configs/          # Experiment configs per dataset and method
+configs/
+  domainnet/        # DomainNet-126 configs (all methods)
+  office_home/      # Office-Home configs (all methods)
+  visda/            # VisDA-C configs (all methods)
+  ucf_hmdb/         # UCF → HMDB video configs
+  kinetics/         # Kinetics video configs
+  imagenet/         # ImageNet supervised baseline configs
 tools/
-  run_net.py      # Main entry point
-  train_adaembed.py
-  train_adamatch.py
-  train_mme.py
-  train_mcd.py
-  test_net.py
+  run_net.py        # Main entry point
+  train_adaembed.py # AdaEmbed training loop
+  train_adamatch.py # AdaMatch training loop
+  train_mme.py      # MME training loop
+  train_mcd.py      # MCD training loop
+  mme.py            # MME launcher
+  test_net.py       # Evaluation
+  extract_features.py
+  visualization.py
 slowfast/
-  models/         # Backbones (Swin V2, ViT, ResNet, I3D, ...)
-  datasets/       # Data loaders
-  utils/          # Logging, metrics, checkpointing
-  config/         # Default config and schema
+  models/           # Backbones (Swin V2, ViT, ResNet, I3D, ...)
+  datasets/         # Data loaders
+  utils/            # Logging, metrics, checkpointing
+  config/           # Default config and schema
 ```
 
 ---
@@ -148,6 +160,7 @@ This codebase is built on [PySlowFast](https://github.com/facebookresearch/slowf
 @article{mottaghi2024adaembed,
   title={AdaEmbed: Semi-supervised Domain Adaptation in the Embedding Space},
   author={Mottaghi, Ali and Jamal, Mohammad Abdullah and Yeung, Serena and Mohareri, Omid},
-  year={2024}
+  year={2024},
+  url={https://arxiv.org/abs/2401.12421}
 }
 ```
