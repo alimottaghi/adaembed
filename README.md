@@ -4,8 +4,6 @@
 
 ![AdaEmbed method overview](adaembed.png)
 
----
-
 ## Method
 
 AdaEmbed consists of three training objectives:
@@ -17,8 +15,6 @@ AdaEmbed consists of three training objectives:
 A **gradient reversal layer** implements minimax entropy training: the classifier maximizes entropy over unlabeled target predictions (updating prototypes toward domain-invariant positions) while the encoder minimizes it.
 
 **Backbone:** Swin Transformer V2 (tiny). Any standard classification backbone can be substituted — AdaEmbed is model-agnostic.
-
----
 
 ## Datasets
 
@@ -33,8 +29,6 @@ Download DomainNet and VisDA-C (downloads to `/data` by default):
 bash download_data.sh
 ```
 
----
-
 ## Installation
 
 ```bash
@@ -42,8 +36,6 @@ pip install -e .
 ```
 
 **Key dependencies:** PyTorch, torchvision ≥ 0.4.2, pytorchvideo, scikit-learn, einops, tensorboard, yacs, opencv-python.
-
----
 
 ## Running Experiments
 
@@ -79,8 +71,6 @@ Before running, update the following fields in the config to match your environm
 | `λ_p` (prototype loss) | 0.1 |
 | `λ_H` | 0.1 |
 
----
-
 ## Implemented Baselines
 
 The following methods are available under the same framework and config structure:
@@ -94,8 +84,6 @@ The following methods are available under the same framework and config structur
 - **AdaEmbed** — `ADAPTATION_TYPE: AdaEmbed` *(ours)*
 
 Configs for each baseline are provided under `configs/domainnet/`, `configs/office_home/`, and `configs/visda/`.
-
----
 
 ## Results
 
@@ -116,8 +104,6 @@ AdaEmbed sets a new state of the art on all three benchmarks.
 | UDA | 83.42 | **87.08** |
 | 1-shot | 77.25 | **86.83** |
 | 3-shot | 85.00 | **87.25** |
-
----
 
 ## Repository Structure
 
@@ -146,13 +132,9 @@ slowfast/
   config/           # Default config and schema
 ```
 
----
-
 ## License
 
 This codebase is built on [PySlowFast](https://github.com/facebookresearch/slowfast), which is released under the [Apache 2.0 License](https://www.apache.org/licenses/LICENSE-2.0). The Swin Transformer V2 implementation is Copyright (c) 2022 Microsoft and released under the [MIT License](https://opensource.org/licenses/MIT).
-
----
 
 ## Citation
 
